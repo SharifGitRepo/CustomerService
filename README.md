@@ -235,7 +235,7 @@ Expected: **29 passed, 0 failed** — runs in well under a second, no database o
 - Not yet deployed to Azure — still running locally via Docker Compose
 - The `app` service in `docker-compose.yml` (full containerized stack) is defined but not yet verified working end-to-end
 
-## Troubleshooting
+## Troubleshooting steps
 
 **Database connection error** — confirm the `db` container is running (`docker ps`) and that `dotnet user-secrets list --project src/CustomerService.API` shows a `ConnectionStrings:CustDb` value.
 
