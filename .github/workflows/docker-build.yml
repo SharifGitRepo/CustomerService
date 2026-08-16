@@ -46,6 +46,9 @@ jobs:
       - name: Install dotnet-ef tool
         run: dotnet tool install --global dotnet-ef
 
+      - name: Restore dependencies
+        run: dotnet restore CustomerService.sln
+
       - name: Apply migrations to Azure SQL
         env:
           ConnectionStrings__CustDb: ${{ secrets.AZURE_SQL_CONNECTION_STRING }}
