@@ -28,6 +28,32 @@ jobs:
       - name: Run tests
         run: dotnet test CustomerService.sln --no-build -c Release --verbosity normal
 
+  migrate-database:
+    name: Apply Database Migrations
+    needs: test
+    runs-on: ubuntu-latest
+    # Only run against the real database on actual pushes to main, not on pull requests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install dotnet-ef tool
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Apply migrations to Azure SQL
+        env:
+          ConnectionStrings__CustDb: ${{ secrets.AZURE_SQL_CONNECTION_STRING }}
+        run: |
+          dotnet ef database update \
+            --project src/CustomerService.Infrastructure \
+            --startup-project src/CustomerService.API
+
   build-and-push:
     name: Build and Push Docker Image
     needs: test
