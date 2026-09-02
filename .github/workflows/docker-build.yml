@@ -63,6 +63,8 @@ jobs:
     runs-on: ubuntu-latest
     # Only push on actual pushes to main, not on pull requests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -87,3 +89,33 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/customerservice-api:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Set image tag output
+        id: set_tag
+        run: echo "image_tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+  deploy-to-azure:
+    name: Deploy to Azure Container Apps
+    needs: [ migrate-database, build-and-push ]
+    runs-on: ubuntu-latest
+    # Only deploy on actual pushes to main, not on pull requests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      id-token: write   # required for OIDC federated login, no stored password needed
+      contents: read
+    steps:
+      - name: Log in to Azure via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Update Container App with the new image
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az containerapp update \
+              --name customerservice-api \
+              --resource-group customerservice-rg \
+              --image ${{ secrets.DOCKERHUB_USERNAME }}/customerservice-api:${{ needs.build-and-push.outputs.image_tag }}

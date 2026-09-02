@@ -5,7 +5,8 @@ using CustomerService.Infrastructure.Data;
 using CustomerService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using CustomerService.API.Endpoints;
-using Microsoft.AspNetCore.Builder;  // Required for WebApplication extensions
+using Microsoft.AspNetCore.Builder;
+using Azure.Monitor.OpenTelemetry.AspNetCore;  // Required for WebApplication extensions
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -65,6 +66,7 @@ builder.Services.AddOpenApi();
 // Add OpenAPI/Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddOpenTelemetry().UseAzureMonitor();
 
 var app = builder.Build();
 
